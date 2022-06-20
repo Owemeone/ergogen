@@ -1,0 +1,299 @@
+units:
+  kx: cx
+  ky: cy
+  px: 2
+  py: 2
+points:
+  key:
+    tags: 
+      1u: true
+    footprints:
+      choc_hotswap:
+        type: choc
+        nets:
+          from: =column_net
+          to: GND
+        params:
+          keycaps: true
+          reverse: true
+          hotswap: true
+      choc:
+        type: choc
+        anchor:
+          rotate: 180
+        nets:
+          from: =column_net
+          to: GND
+        params:
+          keycaps: true
+          reverse: true
+  zones:
+    matrix:
+      key.padding: cy
+      rows:
+        bottom:          
+        home:          
+        top:
+      columns:
+        pinkie:
+          spread: cx
+          row_overrides:
+            bottom:
+              #bind: [1, 1, 1, 1]
+              column_net: P21
+            home:
+              #bind: [1, 1, 1, 1]
+              column_net: P20
+            top:
+              #bind: [1, 1, 1, 1]
+              column_net: P19
+        ring:
+          spread: cx
+          stagger: 0.7cy
+          row_overrides:
+            bottom:
+              #bind: [1, 1, 1, 1]
+              column_net: P18
+            home:
+              #bind: [1, 1, 1, 1]
+              column_net: P15
+            top:
+              #bind: [1, 1, 1, 1]
+              column_net: P14
+        middle:
+          spread: cx
+          stagger: 0.2cy
+          row_overrides:
+            bottom:
+              #bind: [0, 1, 1, 1]
+              column_net: P16
+            home:
+              #bind: [1, 1, 1, 1]
+              column_net: P10
+            top:
+              #bind: [1, 1, 1, 1]
+              column_net: P9
+        index:
+          spread: cx
+          stagger: -0.3cy
+          row_overrides:
+            bottom:
+              #bind: [1, 1, 1, 1]
+              column_net: P8
+            home:
+              #bind: [1, 1, 1, 1]
+              column_net: P7
+            top:
+              #bind: [1, 1, 1, 1]
+              column_net: P6
+        far:
+          spread: cx
+          stagger: -0.1cy
+          row_overrides:
+            bottom:
+              #bind: [1, 1, 1, 1]
+              column_net: P5
+            home:
+              #bind: [1, 1, 1, 1]
+              column_net: P4
+            top:
+              #bind: [1, 1, 1, 1]
+              column_net: P3
+    thumbfan:
+      anchor:
+        ref: matrix_far_bottom
+        shift: [-1.5cx, -1.1cy]
+      columns:
+        near:
+          spread: cx
+          rotate: -2
+          origin: [-cx/2, -cy/2]
+          key:
+            column_net: P2
+            column_mark: R
+        home:
+          spread: cx
+          rotate: -15
+          origin: [-cx/2, -cy/2]
+          key:
+            column_net: P0
+            column_mark: M
+        far:
+          spread: cx
+          rotate: -15
+          origin: [-cx/2, -cy/2]
+          key:
+            #bind: [0, -1, 0, 0]
+            column_net: P14
+      rows:
+        thumb:
+outlines:
+  exports:
+    raw:
+      - type: keys
+        side: left
+        size: [cx + px, cy + py]
+        corner: px
+    thumbfan_glue:
+      - type: polygon
+        points:
+          - ref: matrix_far_bottom
+            shift: [0.5 cx + 0.5px, -0.5 cy + 0.5py]
+          - ref: thumbfan_far_thumb
+            shift: [0.5 cx - 0.5px, 0.5 cy + 0.5py]
+          - ref: thumbfan_far_thumb
+            shift: [0.5 cx - 0.5px, -0.5 cy - 0.5py]
+          - ref: thumbfan_far_thumb
+            shift: [-0.5 cx + 0.5px, -0.5 cy - 0.5py]
+          - ref: thumbfan_home_thumb
+            shift: [-0.5 cx + 0.5px, -0.5 cy - 0.5py]
+          - ref: thumbfan_near_thumb
+            shift: [-0.5 cx + 0.5px, -0.5 cy - 0.5py]
+          - ref: matrix_pinkie_bottom
+            shift: [0.5cx - 0.5px, -0.5cy -0.5py]
+          - ref: matrix_pinkie_home
+          - ref: matrix_far_home
+    patch_outer:
+      - type: polygon
+        points:
+          - ref: matrix_ring_top
+          - ref: matrix_ring_bottom
+          - ref: matrix_pinkie_bottom
+            shift: [-0.5 (cx + px), 0]
+          - ref: matrix_pinkie_top
+            shift: [-0.5 (cx + px), 0]
+    patch_inner:
+      - type: polygon
+        points:
+          - ref: matrix_far_top
+            shift: [0.5 (cx + px), 0]
+          - ref: matrix_far_bottom
+            shift: [0.5 (cx + px), 0]
+          - ref: matrix_index_bottom
+          - ref: matrix_index_top
+    controller_area:
+      main:
+        type: rectangle
+        anchor:
+          ref:
+            - matrix_far_top
+          shift: [.5, -3.7 cy]
+        size: [32, 68.5]
+        corner: px
+    keycaps:
+      main:
+        type: keys
+        side: left
+        size: [cx, cy]
+        bound: false
+        corner: 1
+    keywell:
+      main:
+        type: outline
+        name: raw
+      patch_inner:
+        type: outline
+        name: patch_inner
+        operation: add
+      patch_outer:
+        type: outline
+        name: patch_outer
+        operation: add
+      thumbfan_glue:
+        type: outline
+        name: thumbfan_glue
+        operation: add
+    base_outline:
+      main:
+        type: outline
+        name: keywell
+      controller:
+        type: outline
+        name: controller_area
+        operation: add
+    pcb:
+      main:
+        type: outline
+        name: base_outline
+    keycap_outlines:
+      - type: keys
+        side: left
+        size: [1cx - 0.5, 1cy - 0.5] # Choc keycaps are 17.5 x 16.5
+        bound: false
+        corner: 1
+    preview:
+      [keycap_outlines]
+pcbs:
+  owemekeeb:
+    outlines:
+      board:
+        outline: pcb
+      keycaps:
+        outline: preview
+        layer: Eco1.User
+    footprints:
+      mcu_l:
+        type: promicro_pretty
+        anchor:
+          ref:
+            - matrix_far_top
+          shift: [20, -15.8]
+          rotate: 270
+      power:
+        type: pcm12
+        anchor:
+          ref: thumbfan_home_thumb
+          shift: [-28, -13.5]
+          rotate: -110
+        nets:
+          from: pos  
+          to: RAW
+        params:
+          reverse: true 
+      via3:
+        type: via
+        anchor: 
+          ref: thumbfan_home_thumb
+          shift: [3,10]
+        nets: 
+          net: RAW 
+      via4:
+        type: via
+        anchor: 
+          ref: thumbfan_home_thumb
+          shift: [-3,10]
+        nets: 
+          net: pos 
+      via5:
+        type: via
+        anchor: 
+          ref: thumbfan_home_thumb
+          shift: [3,20]
+        nets: 
+          net: GND 
+      via6:
+        type: via
+        anchor: 
+          ref: thumbfan_home_thumb
+          shift: [-3,20]
+        nets: 
+          net: RST 
+      reset:
+        type: b3u1000p
+        nets:
+          r1: RST  
+          r2: GND
+        anchor:
+          ref: thumbfan_home_thumb
+          shift: [-14, 23]
+          rotate: -110
+        params:
+          reverse: true 
+      bat:
+        type: bat
+        nets: 
+          neg: GND
+        anchor:
+          ref: thumbfan_home_thumb
+          shift: [12.5, 57]
+          rotate: -20
