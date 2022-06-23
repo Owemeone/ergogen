@@ -15,16 +15,6 @@ points:
           keycaps: true
           reverse: true
           hotswap: true
-      # choc:
-      #   type: choc
-      #   anchor:
-      #     rotate: 180
-      #   nets:
-      #     from: =colrow
-      #     to: =column_net
-      #   params:
-      #     keycaps: true
-      #     reverse: true
   zones:
     main:
       key.padding: ky
@@ -37,9 +27,9 @@ points:
           spread: kx
           row_overrides:
             bottom:
-              column_net: P19
+              column_net: P8
             home:
-              column_net: P14
+              column_net: P5
             top:
               column_net: P2
         ring:
@@ -47,19 +37,19 @@ points:
           stagger: 0.7ky
           row_overrides:
             bottom:
-              column_net: P18
+              column_net: P7
             home:
-              column_net: P15
+              column_net: P4
             top:
-              column_net: P3
+              column_net: P0
         middle:
           spread: kx
           stagger: 0.2ky
           row_overrides:
             bottom:
-              column_net: P21
+              column_net: P6
             home:
-              column_net: P20
+              column_net: P3
             top:
               column_net: P1
         index:
@@ -67,9 +57,9 @@ points:
           stagger: -0.3ky
           row_overrides:
             bottom:
-              column_net: P8
+              column_net: P15
             home:
-              column_net: P7
+              column_net: P19
             top:
               column_net: P21
         far:
@@ -77,9 +67,9 @@ points:
           stagger: -0.1ky
           row_overrides:
             bottom:
-              column_net: P5
+              column_net: P14
             home:
-              column_net: P4
+              column_net: P18
             top:
               column_net: P20
     thumbfan:
