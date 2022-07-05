@@ -1,0 +1,142 @@
+units:
+  kx: cx
+  ky: cy
+  px: 2
+  py: 2
+points:
+  key:
+    footprints:
+      choc_hotswap:
+        type: choc
+        nets:
+          from: =column_net
+          to: GND
+        params:
+          keycaps: true
+          reverse: true
+          hotswap: true
+  zones:
+    main:
+      key.padding: ky
+      rows:
+        bottom:
+        top:
+      columns:
+        pinkie:
+          spread: kx
+          row_overrides:
+            bottom:
+              column_net: P8
+            top:
+              column_net: P2
+        ring:
+          spread: kx
+          stagger: 0.7ky
+          row_overrides:
+            bottom:
+              column_net: P7
+            top:
+              column_net: P0
+        middle:
+          spread: kx
+          stagger: 0.2ky
+          row_overrides:
+            bottom:
+              column_net: P6
+            top:
+              column_net: P1
+        index:
+          spread: kx
+          stagger: -0.3ky
+          row_overrides:
+            bottom:
+              column_net: P15
+            top:
+              column_net: P21
+        far:
+          spread: kx
+          stagger: -0.1ky
+          row_overrides:
+            bottom:
+              column_net: P14
+            top:
+              column_net: P20
+outlines:
+  exports:
+    raw:
+      - type: keys
+        side: left
+        size: [kx + px, ky + py]
+      - type: polygon
+        points:
+          - ref: main_middle_top
+            shift: [2.5kx + 1px, 0.5ky + 1py]
+          - ref: main_pinkie_bottom
+            shift: [4.5kx + 1px, -0.5ky - 1py]
+          - ref: main_pinkie_bottom
+            shift: [-0.5kx - 1px, -0.5ky -1py]
+          - ref: main_middle_top
+            shift: [-2.5kx -1px, 0.5ky + 1py]
+    controller_area:
+      main:
+        type: rectangle
+        anchor:
+          ref:
+            - main_middle_top
+          shift: [2.5ky + 2px, -2.5ky]
+        size: [30.5, 3ky + px]
+    keycaps:
+      main:
+        type: keys
+        side: left
+        size: [kx, ky]
+        bound: false
+        corner: 1
+    keywell:
+      main:
+        type: outline
+        name: raw
+    base_outline:
+      main:
+        type: outline
+        name: keywell
+      controller:
+        type: outline
+        name: controller_area
+        operation: add
+    pcb:
+      main:
+        type: outline
+        name: base_outline
+    keycap_outlines:
+      - type: keys
+        side: left
+        size: [1kx - 0.5, 1ky - 0.5] # Choc keycaps are 17.5 x 16.5
+        bound: false
+        corner: 1
+    preview:
+      [keycap_outlines]
+    alignment_preview:
+      main:
+        type: outline
+        name: base_outline
+      keys:
+        type: outline
+        name: keycaps
+        operation: stack
+    combined_preview:
+      main:
+        type: outline
+        name: raw
+      controller:
+        type: outline
+        name: controller_area
+        operation: stack
+    pcb_with_keys:
+      main: 
+        type: outline
+        name: pcb
+      keys:
+        type: outline
+        name: preview
+        operation: stack
