@@ -1,0 +1,50 @@
+on: 
+  workflow_call:
+    inputs:
+      keyboard:
+        description: 'Keyboard to build'
+        type: string
+        default: 'owemekeeb'
+
+name: Build
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    name: Generate
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Use Node.js 17
+        uses: actions/setup-node@v2
+        with:
+          node-version: 17.x
+      - name: Install dependencies
+        run: npm install
+      - name: Generate unrouted PCBs
+        run: node src\cli.js input\config-${{ inputs.keyboard }}.yaml
+      - name: Export DSN for main PCB
+        uses: ./.github/actions/export-dsn
+        with:
+          pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
+          dsn_file: output/pcbs/${{ inputs.keyboard }}.dsn
+      - name: Autoroute main PCB
+        uses: ./.github/actions/autoroute
+        with:
+          dsn_file: output/pcbs/${{ inputs.keyboard }}.dsn
+          ses_file: output/pcbs/${{ inputs.keyboard }}.ses
+      - name: Import SES into main PCB
+        uses: ./.github/actions/import-ses
+        with:
+          pcb_input_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
+          pcb_output_file: output/pcbs/${{ inputs.keyboard }}_routed.kicad_pcb
+          ses_file: output/pcbs/${{ inputs.keyboard }}.ses
+      - name: Export Gerbers for main PCB
+        uses: ./.github/actions/export-gerbers
+        with:
+          pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
+          gerbers_dir: output/gerbers/board
+      - name: Persist output
+        uses: actions/upload-artifact@v2
+        with:
+          name: samoklava-routed-pcbs-and-gerbers
+          path: output

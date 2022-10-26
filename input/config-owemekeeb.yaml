@@ -282,8 +282,7 @@ pcbs:
         anchor:
           ref:
             - main_ring_home
-          shift: [-0.25 kx, 0.5 ky]
+          shift: [0, -0.25ky]
         params:
           text: "JLCJLCJLCJLC"
-          justify: right mirror
-          layer: B.SilkS
+          layer: F.SilkS
