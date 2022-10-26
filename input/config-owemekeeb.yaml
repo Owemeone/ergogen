@@ -226,7 +226,7 @@ outlines:
       name: preview
       operation: stack
 pcbs:
-  Owemekeeb:
+  owemekeeb:
     outlines:
       board:
         outline: pcb
