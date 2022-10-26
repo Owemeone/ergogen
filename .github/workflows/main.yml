@@ -22,6 +22,11 @@ jobs:
         run: npm install
       - name: Generate unrouted PCBs
         run: node src/cli.js input/config-${{ inputs.keyboard }}.yaml
+      - name: Persist output
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.keyboard }}-routed-pcbs-and-gerbers
+          path: output
       - name: Export DSN for main PCB
         uses: ./.github/actions/export-dsn
         with:
@@ -44,7 +49,7 @@ jobs:
           pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
           gerbers_dir: output/gerbers/board
       - name: Persist output
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: samoklava-routed-pcbs-and-gerbers
+          name: ${{ inputs.keyboard }}-routed-pcbs-and-gerbers
           path: output
