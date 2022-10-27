@@ -64,7 +64,6 @@ jobs:
         with:
           pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
           gerbers_dir: output/gerbers/board
-          name: ${{ inputs.keyboard }}
       - name: Persist output
         uses: actions/upload-artifact@v3
         with:
