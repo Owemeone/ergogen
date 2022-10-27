@@ -43,6 +43,7 @@ jobs:
         with:
           pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
           drc_dir: output/pcbs/drc
+        continue-on-error: true
       - name: Generate left image
         uses: ./.github/actions/draw-pcb
         with:
