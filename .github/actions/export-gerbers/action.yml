@@ -13,9 +13,6 @@ inputs:
   flags:
     description: 'Additional flags for kikit fab'
     default: '--no-assembly'
-  name:
-    description: 'Add to filenames'
-    default: ''
 runs:
   using: 'docker'
   image: 'docker://yaqwsx/kikit:v0.7'
@@ -24,4 +21,4 @@ runs:
     - '-c'
     - |
       mkdir -p $GITHUB_WORKSPACE/${{ inputs.gerbers_dir }} ;
-      kikit fab ${{ inputs.fab }} --nametemplate '${{ inputs.name }}{}' ${{ inputs.flags }} $GITHUB_WORKSPACE/${{ inputs.pcb_file }} $GITHUB_WORKSPACE/${{ inputs.gerbers_dir }}
+      kikit fab ${{ inputs.fab }} ${{ inputs.flags }} $GITHUB_WORKSPACE/${{ inputs.pcb_file }} $GITHUB_WORKSPACE/${{ inputs.gerbers_dir }}
