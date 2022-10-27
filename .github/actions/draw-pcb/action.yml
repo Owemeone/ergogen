@@ -1,0 +1,27 @@
+name: 'Generate Image'
+description: 'Generate images from a Kicad PCB'
+inputs:
+  pcb_file:
+    description: 'Kicad input file'
+    required: true
+  image_dir:
+    description: 'Output directory'
+    default: 'images'
+  image_name:
+    description: 'Filename'
+    required: true
+  style:
+    description: 'pcbdraw style'
+    default: 'builtin:set-white-enig.json'
+  flags:
+    description: 'Additional flags for kikit pcbdraw'
+    default: ''
+runs:
+  using: 'docker'
+  image: 'docker://yaqwsx/kikit:v0.7'
+  entrypoint: '/bin/sh'
+  args:
+    - '-c'
+    - |
+      mkdir -p $GITHUB_WORKSPACE/${{ inputs.image_dir }} ;
+      pcbdraw ${{ inputs.flags }} --style ${{ inputs.style }} $GITHUB_WORKSPACE/${{ inputs.pcb_file }} $GITHUB_WORKSPACE/${{ inputs.image_dir }}/${{ inputs.image_name }}
