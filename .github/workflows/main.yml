@@ -48,7 +48,7 @@ jobs:
         uses: ./.github/actions/draw-pcb
         with:
           pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
-          image_dir: images
+          image_dir: output/images
           image_name: left.png
           style: 'builtin:set-white-enig.json'
       - name: Generate right image
@@ -56,7 +56,7 @@ jobs:
         with:
           pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
           flags: '-b'
-          image_dir: images
+          image_dir: output/images
           image_name: right.png
           style: 'builtin:set-white-enig.json'
       - name: Export Gerbers for main PCB
@@ -64,6 +64,7 @@ jobs:
         with:
           pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
           gerbers_dir: output/gerbers/board
+          name: ${{ inputs.keyboard }}
       - name: Persist output
         uses: actions/upload-artifact@v3
         with:
