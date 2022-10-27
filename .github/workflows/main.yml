@@ -64,7 +64,7 @@ jobs:
         with:
           pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
           gerbers_dir: output/gerbers/board
-          flags: '--no-assembly --drc'
+          flags: "--no-assembly --drc --nametemplate '${{ inputs.keyboard }}{}'"
       - name: Persist output
         uses: actions/upload-artifact@v3
         with:
