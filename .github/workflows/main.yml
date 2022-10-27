@@ -22,11 +22,6 @@ jobs:
         run: npm install
       - name: Generate unrouted PCBs
         run: node src/cli.js input/config-${{ inputs.keyboard }}.yaml
-      - name: Persist output
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ inputs.keyboard }}-routed-pcbs-and-gerbers
-          path: output
       - name: Export DSN for main PCB
         uses: ./.github/actions/export-dsn
         with:
@@ -43,6 +38,26 @@ jobs:
           pcb_input_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
           pcb_output_file: output/pcbs/${{ inputs.keyboard }}_routed.kicad_pcb
           ses_file: output/pcbs/${{ inputs.keyboard }}.ses
+      - name: Run DRC on main PCB
+        uses: ./.github/actions/run-drc
+        with:
+          pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
+          drc_dir: output/pcbs/drc
+      - name: Generate left image
+        uses: ./.github/actions/draw-pcb
+        with:
+          pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
+          image_dir: images
+          image_name: left.png
+          style: 'builtin:set-white-enig.json'
+      - name: Generate right image
+        uses: ./.github/actions/draw-pcb
+        with:
+          pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
+          flags: '-b'
+          image_dir: images
+          image_name: right.png
+          style: 'builtin:set-white-enig.json'
       - name: Export Gerbers for main PCB
         uses: ./.github/actions/export-gerbers
         with:
