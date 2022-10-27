@@ -1,4 +1,4 @@
-name: 'Build Owemekeeb'
+name: 'Build Samoklava'
 on:
   - workflow_dispatch
 jobs:
