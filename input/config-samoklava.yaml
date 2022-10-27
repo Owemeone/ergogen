@@ -275,7 +275,7 @@ pcbs:
       edge:
         outline: bottom_outline
         layer: Edge.Cuts
-  board:
+  samoklava:
     outlines:
       edge:
         outline: pcb
