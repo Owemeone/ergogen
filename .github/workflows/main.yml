@@ -10,6 +10,7 @@ name: Build
 jobs:
   generate:
     strategy:
+      fail-fast: false
       matrix:
         keyboard: ${{ fromJSON(inputs.keyboards) }}
     runs-on: ubuntu-latest
