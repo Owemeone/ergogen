@@ -1,12 +1,8 @@
-name: 'Build all keyboards'
+name: 'Build 1april'
 on:
   - workflow_dispatch
 jobs:
-  all_keyboards:
-    strategy:
-      matrix:
-        keyboard: [1april, card, flame, flipper, owemekeeb, paintbrush, piano, samoklava]
-    steps:
-      - uses: ./.github/workflows/main.yml
-        with:
-          keyboard: ${{ matrix.keyboard }}
+  build:
+    uses: ./.github/workflows/main.yml
+    with:
+      keyboard: [1april, card, flame, flipper, owemekeeb, paintbrush, piano, samoklava]
