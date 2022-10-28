@@ -9,6 +9,9 @@ on:
 name: Build
 jobs:
   generate:
+    strategy:
+      matrix:
+        keyboard: ${{ inputs.keyboard}}
     runs-on: ubuntu-latest
     name: Generate
     steps:
@@ -21,12 +24,12 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Generate unrouted PCBs
-        run: node src/cli.js input/config-${{ inputs.keyboard }}.yaml
+        run: node src/cli.js input/config-${{ matrix.keyboard }}.yaml
       - name: Export DSN for main PCB
         uses: ./.github/actions/export-dsn
         with:
-          pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
-          dsn_file: output/pcbs/${{ inputs.keyboard }}.dsn
+          pcb_file: output/pcbs/${{ matrix.keyboard }}.kicad_pcb
+          dsn_file: output/pcbs/${{ matrix.keyboard }}.dsn
       - name: Autoroute main PCB
         uses: ./.github/actions/autoroute
         with:
@@ -41,20 +44,20 @@ jobs:
       - name: Run DRC on main PCB
         uses: ./.github/actions/run-drc
         with:
-          pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
+          pcb_file: output/pcbs/${{ matrix.keyboard }}.kicad_pcb
           drc_dir: output/pcbs/drc
         continue-on-error: true
       - name: Generate left image
         uses: ./.github/actions/draw-pcb
         with:
-          pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
+          pcb_file: output/pcbs/${{ matrix.keyboard }}.kicad_pcb
           image_dir: output/images
           image_name: left.png
           style: 'builtin:set-white-enig.json'
       - name: Generate right image
         uses: ./.github/actions/draw-pcb
         with:
-          pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
+          pcb_file: output/pcbs/${{ matrix.keyboard }}.kicad_pcb
           flags: '-b'
           image_dir: output/images
           image_name: right.png
@@ -62,12 +65,12 @@ jobs:
       - name: Export Gerbers for main PCB
         uses: ./.github/actions/export-gerbers
         with:
-          pcb_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
+          pcb_file: output/pcbs/${{ matrix.keyboard }}.kicad_pcb
           gerbers_dir: output/gerbers/board
-          flags: "--no-assembly --drc --nametemplate '${{ inputs.keyboard }}{}'"
+          flags: "--no-assembly --drc --nametemplate '${{ matrix.keyboard }}{}'"
         continue-on-error: true
       - name: Persist output
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ inputs.keyboard }}-routed-pcbs-and-gerbers
+          name: ${{ matrix.keyboard }}-routed-pcbs-and-gerbers
           path: output
