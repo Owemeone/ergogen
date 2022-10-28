@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         keyboard: [1april, card, flame, flipper, owemekeeb, paintbrush, piano, samoklava]
-    build:
-      uses: ./.github/workflows/main.yml
-      with:
-        keyboard: ${{ matrix.version }}
+    steps:
+      - uses: ./.github/workflows/main.yml
+        with:
+          keyboard: ${{ matrix.version }}
