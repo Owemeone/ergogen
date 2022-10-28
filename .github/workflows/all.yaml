@@ -1,4 +1,4 @@
-name: 'Build 1april'
+name: 'Build all keyboard'
 on:
   - workflow_dispatch
 jobs:
