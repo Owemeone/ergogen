@@ -1,4 +1,4 @@
-name: 'Build Samoklava'
+name: 'Build samoklava'
 on:
   - workflow_dispatch
 jobs:
