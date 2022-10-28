@@ -5,4 +5,4 @@ jobs:
   build:
     uses: ./.github/workflows/main.yml
     with:
-      keyboard: [1april, card, flame, flipper, owemekeeb, paintbrush, piano, samoklava]
+      keyboard: '[1april, card, flame, flipper, owemekeeb, paintbrush, piano, samoklava]'
