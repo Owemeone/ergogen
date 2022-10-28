@@ -14,4 +14,4 @@ runs:
   args:
     - '-c'
     - |
-      java -jar /opt/freerouting_cli.jar -mp 250 -de ${{ inputs.dsn_file }} -do ${{ inputs.ses_file }}
+      java -jar /opt/freerouting_cli.jar -ap 100 -de ${{ inputs.dsn_file }} -do ${{ inputs.ses_file }}
