@@ -68,7 +68,7 @@ jobs:
         with:
           pcb_file: output/pcbs/${{ matrix.keyboard }}.kicad_pcb
           gerbers_dir: output/gerbers/board
-          flags: "--no-assembly --drc --nametemplate '${{ matrix.keyboard }}{}'"
+          flags: "--no-assembly --no-drc --nametemplate '${{ matrix.keyboard }}{}'"
         continue-on-error: true
       - name: Persist output
         uses: actions/upload-artifact@v3
