@@ -1,17 +1,17 @@
 on: 
   workflow_call:
     inputs:
-      keyboard:
+      keyboards:
         description: 'Keyboard to build'
         type: string
-        default: 'owemekeeb'
+        default: '["owemekeeb"]'
 
 name: Build
 jobs:
   generate:
     strategy:
       matrix:
-        keyboard: ${{ fromJSON(inputs.keyboard) }}
+        keyboard: ${{ fromJSON(inputs.keyboards) }}
     runs-on: ubuntu-latest
     name: Generate
     steps:
@@ -33,14 +33,14 @@ jobs:
       - name: Autoroute main PCB
         uses: ./.github/actions/autoroute
         with:
-          dsn_file: output/pcbs/${{ inputs.keyboard }}.dsn
-          ses_file: output/pcbs/${{ inputs.keyboard }}.ses
+          dsn_file: output/pcbs/${{ matrix.keyboard }}.dsn
+          ses_file: output/pcbs/${{ matrix.keyboard }}.ses
       - name: Import SES into main PCB
         uses: ./.github/actions/import-ses
         with:
-          pcb_input_file: output/pcbs/${{ inputs.keyboard }}.kicad_pcb
-          pcb_output_file: output/pcbs/${{ inputs.keyboard }}_routed.kicad_pcb
-          ses_file: output/pcbs/${{ inputs.keyboard }}.ses
+          pcb_input_file: output/pcbs/${{ matrix.keyboard }}.kicad_pcb
+          pcb_output_file: output/pcbs/${{ matrix.keyboard }}_routed.kicad_pcb
+          ses_file: output/pcbs/${{ matrix.keyboard }}.ses
       - name: Run DRC on main PCB
         uses: ./.github/actions/run-drc
         with:
