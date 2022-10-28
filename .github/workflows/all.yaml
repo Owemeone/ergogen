@@ -9,4 +9,4 @@ jobs:
     steps:
       - uses: ./.github/workflows/main.yml
         with:
-          keyboard: ${{ matrix.version }}
+          keyboard: ${{ matrix.keyboard }}
