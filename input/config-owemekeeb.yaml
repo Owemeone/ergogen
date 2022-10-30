@@ -281,7 +281,7 @@ pcbs:
         type: text
         anchor:
           ref:
-            - main_ring_home
+            - main_middle_home
           shift: [0, -0.25ky]
         params:
           text: "JLCJLCJLCJLC"
