@@ -282,7 +282,7 @@ pcbs:
         what: text
         adjust:
           ref:
-            - main_middle_home
+            - main_ring_home
           shift: [0, -0.25ky]
         params:
           text: JLCJLCJLCJLC
