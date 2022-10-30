@@ -1,6 +1,8 @@
 name: 'Build owemekeeb'
 on:
-  - workflow_dispatch
+  push:
+    paths:
+      - input/config-owemekeeb.yaml
 jobs:
   build:
     uses: ./.github/workflows/main.yml
