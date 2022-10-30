@@ -1,5 +1,6 @@
 name: 'Build owemekeeb'
 on:
+  workflow_dispatch:
   push:
     paths:
       - input/config-owemekeeb.yaml
