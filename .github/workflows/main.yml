@@ -1,7 +1,7 @@
 on: 
   workflow_call:
     inputs:
-      keyboards:
+      keyboard:
         description: 'Keyboard to build'
         type: string
         default: '["owemekeeb"]'
