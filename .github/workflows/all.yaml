@@ -5,7 +5,7 @@ jobs:
   build:
     uses: ./.github/workflows/main.yml
     with:
-      keyboards: '[
+      keyboard: '[
         "1april",
         "card",
         "flame",
@@ -14,4 +14,4 @@ jobs:
         "paintbrush",
         "piano",
         "samoklava"
-      ]'
+        ]'
