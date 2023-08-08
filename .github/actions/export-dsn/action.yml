@@ -9,12 +9,11 @@ inputs:
     required: true
 runs:
   using: 'docker'
-  image: 'docker://soundmonster/kicad-automation-scripts:latest'
-  entrypoint: '/bin/sh'
+  image: 'docker://ghcr.io/inti-cmnb/kicad7_auto:1.6.1'
+  entrypoint: '/bin/bash'
   args:
     - '-c'
     # GH actions set $HOME to a weird location and we have to move Kicad settings there first
     - |
-      mkdir -p $HOME/.config/kicad ;
-      cp /root/.config/kicad/* $HOME/.config/kicad ;
+      cd 
       /usr/lib/python2.7/dist-packages/kicad-automation/pcbnew_automation/export_dsn.py ${{ inputs.pcb_file }} ${{ inputs.dsn_file }}

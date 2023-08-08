@@ -9,3 +9,30 @@ jobs:
     uses: ./.github/workflows/main.yml
     with:
       keyboard: '["owemekeeb"]'
+  Fabrication:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Node.js 17
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      - name: Install dependencies
+        run: npm install
+      - name: Generate unrouted PCBs
+        run: node src/cli.js input/config-owemekeeb.yaml
+      - uses: actions/checkout@v3
+      - uses: INTI-CMNB/KiBot@v2_k7
+        with:
+          # Required - kibot config file
+          config: config.kibot.yaml
+          # optional - prefix to output defined in config
+          dir: output
+          # optional - schematic file
+          # schema: 'schematic.sch'
+          # optional - PCB design file
+          board: 'output/pcbs/owmekeeb.kicad_pcb'
+      - name: upload results
+        uses: actions/upload-artifact@v2
+        with:
+          name: output
+          path: output
