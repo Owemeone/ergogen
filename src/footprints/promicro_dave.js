@@ -4,7 +4,8 @@
 //    To orient the MCU down, meaning power led faces the pcb, bridge the pads on the opposite side of the pcb
 
 module.exports = {
-  nets: {
+  params: {
+    designator: 'MCU',
     RAW: 'RAW',
     GND: 'GND',
     RST: 'RST',
@@ -26,10 +27,7 @@ module.exports = {
     P6: 'P6',
     P7: 'P7',
     P8: 'P8',
-    P9: 'P9',
-  },
-  params: {
-    class: 'MCU',
+    P9: 'P9'
   },
   body: p => {
     return `

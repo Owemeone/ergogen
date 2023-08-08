@@ -8,10 +8,10 @@ module.exports = {
         justify: null
     },
     body: p => {
-        justify = p.param.justify && `(justify ${p.param.justify})` || '';
+        justify = p.justify && `(justify ${p.justify})` || '';
         return `
-            (gr_text "${p.param.text}" ${p.at} (layer ${p.param.layer})
-                (effects (font (size ${p.param.h_size} ${p.param.v_size}) (thickness ${p.param.thickness})) ${justify})
+            (gr_text "${p.text}" ${p.at} (layer ${p.layer})
+                (effects (font (size ${p.h_size} ${p.v_size}) (thickness ${p.thickness})) ${justify})
             )
         `
     }
