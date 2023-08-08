@@ -5,10 +5,10 @@ on:
     paths:
       - input/config-owemekeeb.yaml
 jobs:
-  build:
-    uses: ./.github/workflows/main.yml
-    with:
-      keyboard: '["owemekeeb"]'
+  #build:
+  #  uses: ./.github/workflows/main.yml
+  #  with:
+  #    keyboard: '["owemekeeb"]'
   Fabrication:
     runs-on: ubuntu-latest
     steps:
