@@ -22,6 +22,8 @@ jobs:
         run: npm install
       - name: Generate unrouted PCBs
         run: node src/cli.js input/config-owemekeeb.yaml
+      - name: List files
+        run: ls -al output/pcbs
       - uses: INTI-CMNB/KiBot@v2_k7
         with:
           # Required - kibot config file
@@ -31,7 +33,7 @@ jobs:
           # optional - schematic file
           # schema: 'schematic.sch'
           # optional - PCB design file
-          board: 'output/pcbs/owmekeeb.kicad_pcb'
+          board: 'output/pcbs/owemekeeb.kicad_pcb'
       - name: upload results
         uses: actions/upload-artifact@v2
         with:
