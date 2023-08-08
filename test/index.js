@@ -8,25 +8,48 @@ const ergogen = require('../src/ergogen')
 require('./helpers/mock_footprints').inject(ergogen)
 
 let what = process.env.npm_config_what
-let dump = process.env.npm_config_dump
+const dump = process.env.npm_config_dump
+const lineends = /(?:\r\n|\r|\n)/g
+
+const handle_slash = (() => {
+  if (path.sep == '\\') {
+    return str => str.replace(/\\/g,'/')
+  } else {
+    return str => str
+  }
+})()
+
 
 // Unit tests
 // the --what switch supports each unit individually
 // the --dump switch does nothing here
 
 what = what ? what.split(',') : false
-for (const unit of glob.sync(path.join(__dirname, 'unit', '*.js'))) {
+for (const unit of glob.sync(handle_slash(path.join(__dirname, 'unit', '*.js')))) {
     const base = path.basename(unit, '.js')
     if (what && !what.includes(base)) continue
     require(`./unit/${base}.js`)
 }
 
+
+
 // Integration tests
 // the --what switch supports categories (like `points` and `outlines`)
-// as well as individual tests using slash-notation (like `points/000`)
-// the --dump switch can output actual results for easier reference creation
-// by default, json output is generated of the whole `actual`, but a raw,
-// type-specific representation can be written if a deep path is specified
+// as well as individual tests using slash-notation (like `points/default`)
+// the --dump switch can output the new results, overriding the old reference
+
+const dump_structure = (obj, depth=-1, prefix='', breadcrumbs=[]) => {
+    if (a.type(obj)() != 'object') {
+        console.log(prefix + breadcrumbs.join('_'))
+        return
+    }
+    if (depth == 0) return
+    for (const [key, val] of Object.entries(obj)) {
+        breadcrumbs.push(key)
+        dump_structure(val, depth-1, prefix, breadcrumbs)
+        breadcrumbs.pop()
+    }
+}
 
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1)
 
@@ -35,42 +58,52 @@ const test = function(input_path) {
     this.slow(120000)
     title = path.basename(input_path, '.yaml').split('_').join(' ')
     it(title, async function() {
+        
         const input = yaml.load(fs.readFileSync(input_path).toString())
-        const actual = await ergogen.process(input, true)
-
-        // if we're just creating the reference, we can dump the current output
-        if (dump) {
-            // whole dump
-            if (dump === true || dump === 'true') {
-                const out = path.join(
-                    path.dirname(input_path),
-                    path.basename(input_path, '.yaml') + '___ref_candidate.json'
-                )
-                fs.writeJSONSync(out, actual, {spaces: 4})
-            // partial, type-specific dump
-            } else {
-                const part = u.deep(actual, dump)
-                const out = path.join(
-                    path.dirname(input_path),
-                    path.basename(input_path, '.yaml') + '___' + dump.split('.').join('_')
-                )
-                if (a.type(part)() == 'string') {
-                    fs.writeFileSync(out + '.txt', part)
-                } else {
-                    fs.writeJSONSync(out + '.json', part, {spaces: 4})
-                }
-            }
+        const base = path.join(path.dirname(input_path), path.basename(input_path, '.yaml'))
+        const references = glob.sync(handle_slash(base) + '___*')
+        
+        // handle deliberately wrong inputs
+        const exception = base + '___EXCEPTION.txt'
+        if (fs.existsSync(exception)) {
+            const exception_snippet = fs.readFileSync(exception).toString()
+            return await ergogen.process(input, true).should.be.rejectedWith(exception_snippet)
         }
 
-        // compare actual vs. reference
-        const base = path.join(path.dirname(input_path), path.basename(input_path, '.yaml'))
-        for (const expected_path of glob.sync(base + '___*')) {
-            let expected = fs.readFileSync(expected_path).toString()
-            if (expected_path.endsWith('.json')) {
-                expected = JSON.parse(expected)
+        const output = await ergogen.process(input, true)
+
+        // compare output vs. reference
+        if (references.length) {
+            for (const expected_path of references) {
+                let expected = fs.readFileSync(expected_path).toString()
+                if (expected_path.endsWith('.json')) {
+                    expected = JSON.parse(expected)
+                }
+                const comp_path = expected_path.split('___')[1].split('.')[0].split('_').join('.')
+                const output_part = u.deep(output, comp_path)
+                if (dump) {
+                    if (a.type(output_part)() == 'string') {
+                        fs.writeFileSync(expected_path, output_part)
+                    } else {
+                        fs.writeJSONSync(expected_path, output_part, {spaces: 4})
+                    }
+                } else {
+                    if (a.type(output_part)() == 'string') {
+                        const parse_out = output_part.replace(lineends, '\n')
+                        const parse_exp = expected.replace(lineends, '\n')
+                        parse_out.should.deep.equal(parse_exp)
+                    } else {
+                        // JSON can hide negative zeroes, for example, so we canonical-ize first
+                        const canonical_part = JSON.parse(JSON.stringify(output_part))
+                        canonical_part.should.deep.equal(expected)
+                    }
+                }
             }
-            const comp_path = expected_path.split('___')[1].split('.')[0].split('_').join('.')
-            u.deep(actual, comp_path).should.deep.equal(expected)
+
+        // explicit dump-ing above only works, if there are already files with the right name
+        // if there aren't, dump now outputs a list of candidates that could be referenced
+        } else if (dump) {
+            dump_structure(output, 3, base + '___')
         }
     })
 }
@@ -87,27 +120,30 @@ if (what) {
             regex = path.join(__dirname, w, '*.yaml')
         }
         describe(title, function() {
-            for (const i of glob.sync(regex)) {
+            for (const i of glob.sync(handle_slash(regex))) {
                 test.call(this, i)
             }
         })
     }
 } else {
-    for (const part of ['points', 'outlines', 'cases', 'pcbs']) {
+    for (const part of ['points', 'outlines', 'cases', 'pcbs', 'footprints']) {
         describe(cap(part), function() {
-            for (const i of glob.sync(path.join(__dirname, part, '*.yaml'))) {
+            for (const i of glob.sync(handle_slash(path.join(__dirname, part, '*.yaml')))) {
                 test.call(this, i)
             }
         })
     }
 }
 
-// End-to-end tests to actually drive the CLI as well
-// --what filter is the same as above ('cli', or 'cli/prefix')
-// --dump saves the log, as well as prevents the output from being deleted
 
-const read = (d, p) => fs.readFileSync(path.join(d, p)).toString()
-const exists = (d, p) => fs.existsSync(path.join(d, p))
+
+// End-to-end tests to actually drive the CLI as well
+// --what is the same as above ('cli', or 'cli/prefix')
+// --dump automatically overrides the old reference
+
+const joiner = (a, b) => path.join(a, b)
+const read = (...args) => fs.readFileSync(args.reduce(joiner, '')).toString()
+const exists = (...args) => fs.existsSync(args.reduce(joiner, ''))
 const { execSync } = require('child_process')
 const dircompare = require('dir-compare')
 
@@ -119,31 +155,47 @@ for (let w of cli_what) {
     describe('CLI', function() {
         this.timeout(120000)
         this.slow(120000)
-        for (const t of glob.sync(path.join(__dirname, w))) {
-            it(cap(path.basename(t).split('_').join(' ')), function() {
+        for (const t of glob.sync(handle_slash(path.join(__dirname, w)))) {
+            it(path.basename(t).split('_').join(' '), function() {
                 const command = read(t, 'command')
                 const output_path = exists(t, 'path') ? read(t, 'path') : 'output'
                 fs.removeSync(output_path)
-                const version_regex = /\bv\d+\.\d+\.\d+\b/
+                const version_regex = /\bv\d+\.\d+\.\d+(\-develop)?\b/
                 // correct execution
-                if (exists(t, 'log')) {
-                    const ref_log = read(t, 'log').replace(version_regex, '<version>')
+                if (!exists(t, 'error')) {
+                    let ref_log = ''
+                    if (exists(t, 'log')) {
+                        ref_log = read(t, 'log').replace(version_regex, '<version>')
+                    }
                     const actual_log = execSync(command).toString().replace(version_regex, '<version>')
                     if (dump) {
                         fs.writeFileSync(path.join(t, 'log'), actual_log)
                     }
-                    actual_log.should.equal(ref_log)
-                    const comp_res = dircompare.compareSync(output_path, path.join(t, 'reference'), {
-                        compareContent: true
+                    let ref_path = path.join(t, 'reference')
+                    if (!exists(ref_path)) {
+                        fs.mkdirpSync(ref_path)
+                    }
+                    if (fs.statSync(ref_path).isFile()) {
+                        ref_path = path.resolve(path.join(t, read(ref_path).trim()))
+                    }
+                    const comp_res = dircompare.compareSync(output_path, ref_path, {
+                        compareContent: true,
+                        ignoreLineEnding: true,
+                        compareFileSync: dircompare.fileCompareHandlers.lineBasedFileCompare.compareSync,
+                        compareFileAsync: dircompare.fileCompareHandlers.lineBasedFileCompare.compareAsync
                     })
                     if (dump) {
-                        fs.moveSync(output_path, path.join(t, 'output'), {overwrite: true})
+                        fs.moveSync(output_path, ref_path, {overwrite: true})
                     } else {
                         fs.removeSync(output_path)
                     }
+                    const parse_act_log = actual_log.replace(lineends, '\n')
+                    const parse_ref_log = ref_log.replace(lineends, '\n')
+                    parse_act_log.should.equal(parse_ref_log)
                     comp_res.same.should.be.true
+                // deliberately incorrect execution
                 } else {
-                    const ref_error = read(t, 'error').replace(version_regex, '<version>')
+                    const ref_error = read(t, 'error')
                     try {
                         execSync(command, {stdio: 'pipe'})
                         throw 'should_have_thrown'
@@ -151,7 +203,7 @@ for (let w of cli_what) {
                         if (ex === 'should_have_thrown') {
                             throw new Error('This command should have thrown!')
                         }
-                        const actual_error = ex.stderr.toString().replace(version_regex, '<version>')
+                        const actual_error = ex.stderr.toString().split('\n')[0]
                         if (dump) {
                             fs.writeFileSync(path.join(t, 'error'), actual_error)
                         }

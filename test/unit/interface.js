@@ -10,7 +10,8 @@ const load = name => yaml.safeLoad(fs.readFileSync(
 ).toString())
 const minimal = load('minimal.yaml')
 const big = load('big.yaml')
-const kle = load('atreus_kle.json')
+const minimal_kle = load('minimal_kle.json')
+const atreus_kle = load('atreus_kle.json')
 
 describe('Interface', function() {
 
@@ -49,7 +50,8 @@ describe('Interface', function() {
                 //:
                 return 'not an object';
             `, true, logger).should.be.rejectedWith('not valid'),
-            ergogen.process(kle, true, logger).should.be.rejectedWith('KLE'),
+            ergogen.process(minimal_kle, true, logger).should.be.rejectedWith('KLE'),
+            ergogen.process(atreus_kle, true, logger).should.be.rejectedWith('KLE'),
             ergogen.process('not an object', true, logger).should.be.rejectedWith('object'),
             ergogen.process({}, true, logger).should.be.rejectedWith('empty'),
             ergogen.process({not_points: {}}, true, () => {}).should.be.rejectedWith('points clause'),
@@ -90,9 +92,9 @@ describe('Interface', function() {
     it('engine', async function() {
         return Promise.all([
             ergogen.process({'meta.engine': 'invalid'}).should.be.rejectedWith('Invalid'),
-            ergogen.process({'meta.engine': '^0.1.2'}).should.be.rejectedWith('satisfy'),
+            ergogen.process({'meta.engine': '0.1.2'}).should.be.rejectedWith('satisfy'),
             // no "points clause" means we're over the engine check, so it "succeeded"
-            ergogen.process({'meta.engine': `^${version}`}).should.be.rejectedWith('points clause')
+            ergogen.process({'meta.engine': `${version}`}).should.be.rejectedWith('points clause')
         ])
     })
     

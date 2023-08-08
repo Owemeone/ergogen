@@ -22,6 +22,20 @@ describe('Utils', function() {
         should.equal(u.deep(obj, 'non.existent.key'), undefined)
     })
 
+    it('template', function() {
+        u.template('arst').should.equal('arst')
+        u.template('{arst}}').should.equal('{arst}}')
+        u.template('{{arst}}').should.equal('')
+        u.template('{{arst}}', {arst: 'neio'}).should.equal('neio')
+        u.template('{{a}}_{{b}}', {a: 'c', b: 'd'}).should.equal('c_d')
+        u.template(
+            '{{longlonglong}}_{{short}}',
+            {longlonglong: 'long', short: 'shortshortshort'}
+        ).should.equal('long_shortshortshort')
+        u.template('{{a.b.c}}', {a: {b: {c: 'deep'}}}).should.equal('deep')
+        u.template('{x: {{number}}, y: {{number}}}', {number: 5}).should.equal('{x: 5, y: 5}')
+    })
+
     it('eq', function() {
         // basic point usage
         u.eq([1, 2], [1, 2]).should.equal(true)
@@ -102,7 +116,13 @@ describe('Utils', function() {
         u.poly([[0, 0], [1, 0], [1, 0], [1, 1]]).should.deep.equal(expected)
         // empty in, empty out
         u.poly([]).should.deep.equal({paths: {}})
+    })
 
+    it('poly', function() {
+        u.bbox([[0, 0], [1, 0], [1, 1]]).should.deep.equal({
+            high: [1, 1],
+            low: [0, 0]
+        })
     })
 
     it('combine helpers', function() {
@@ -117,6 +137,27 @@ describe('Utils', function() {
                 a, b
             }
         })
+    })
+
+    it('semver', function() {
+        const expected = {major: 1, minor: 0, patch: 0}
+        u.semver('1.0.0').should.deep.equal(expected)
+        u.semver('1.0.0-develop').should.deep.equal(expected)
+        u.semver('v1.0.0').should.deep.equal(expected)
+        u.semver('1').should.deep.equal(expected)
+        u.semver('1.0').should.deep.equal(expected)
+        u.semver.bind(this, '1.', 'name').should.throw()
+        u.semver.bind(this, 'invalid', 'name').should.throw()
+    })
+
+    it('satisfies', function() {
+        u.satisfies('1.2.3', '1.2.3').should.be.true
+        u.satisfies('1.2.3', '1.2.1').should.be.true
+        u.satisfies('1.2.3', '1.1.0').should.be.true
+        u.satisfies('1.2.3', '1.2.4').should.be.false
+        u.satisfies('1.2.3', '1.3.0').should.be.false
+        u.satisfies('1.2.3', '2.0.0').should.be.false
+        u.satisfies({major: 1, minor: 2, patch: 3}, {major: 1, minor: 2, patch: 3}).should.be.true
     })
 
 })

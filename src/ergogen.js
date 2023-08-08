@@ -7,7 +7,6 @@ const outlines_lib = require('./outlines')
 const cases_lib = require('./cases')
 const pcbs_lib = require('./pcbs')
 
-const semver = require('semver')
 const version = require('../package.json').version
 
 const process = async (raw, debug=false, logger=()=>{}) => {
@@ -16,6 +15,8 @@ const process = async (raw, debug=false, logger=()=>{}) => {
     let empty = true
     let [config, format] = io.interpret(raw, logger)
     let suffix = format
+    // KLE conversion warrants automaticly engaging debug mode
+    // as, usually, we're only interested in the points anyway
     if (format == 'KLE') {
         suffix = `${format} (Auto-debug)`
         debug = true
@@ -34,12 +35,9 @@ const process = async (raw, debug=false, logger=()=>{}) => {
 
     if (config.meta && config.meta.engine) {
         logger('Checking compatibility...')
-        const engine = semver.validRange(config.meta.engine)
-        if (!engine) {
-            throw new Error('Invalid config engine declaration!')
-        }
-        if (!semver.satisfies(version, engine)) {
-            throw new Error(`Current ergogen version (${version}) doesn\'t satisfy config's engine requirement (${engine})!`)
+        const engine = u.semver(config.meta.engine, 'config.meta.engine')
+        if (!u.satisfies(version, engine)) {
+            throw new Error(`Current ergogen version (${version}) doesn\'t satisfy config's engine requirement (${config.meta.engine})!`)
         }
     }
 
@@ -71,12 +69,12 @@ const process = async (raw, debug=false, logger=()=>{}) => {
         empty = false
     }
 
-    logger('Extruding cases...')
+    logger('Modeling cases...')
     const cases = cases_lib.parse(config.cases || {}, outlines, units)
     results.cases = {}
     for (const [case_name, case_script] of Object.entries(cases)) {
         if (!debug && case_name.startsWith('_')) continue
-        results.cases[case_name] = await io.threedee(case_script, debug)
+        results.cases[case_name] = {jscad: case_script}
         empty = false
     }
 
@@ -96,8 +94,22 @@ const process = async (raw, debug=false, logger=()=>{}) => {
     return results
 }
 
+const inject = (type, name, value) => {
+    if (value === undefined) {
+        value = name
+        name = type
+        type = 'footprint'
+    }
+    switch (type) {
+        case 'footprint':
+            return pcbs_lib.inject_footprint(name, value)
+        default:
+            throw new Error(`Unknown injection type "${type}" with name "${name}" and value "${value}"!`)
+    }
+}
+
 module.exports = {
     version,
     process,
-    inject_footprint: pcbs_lib.inject_footprint
+    inject
 }

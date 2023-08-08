@@ -1,7 +1,11 @@
 const m = require('makerjs')
+const yaml = require('js-yaml')
+
+const u = require('./utils')
 const a = require('./assert')
 const prep = require('./prepare')
-const anchor_lib = require('./anchor')
+const anchor = require('./anchor').parse
+const filter = require('./filter').parse
 
 const kicad_prefix = `
 (kicad_pcb (version 20171130) (host pcbnew 5.1.6)
@@ -125,7 +129,7 @@ const kicad_power_netclass = `
   )
 `
 
-const makerjs2kicad = exports._makerjs2kicad = (model, layer='Edge.Cuts') => {
+const makerjs2kicad = exports._makerjs2kicad = (model, layer) => {
     const grs = []
     const xy = val => `${val[0]} ${-val[1]}`
     m.model.walk(model, {
@@ -161,66 +165,112 @@ exports.inject_footprint = (name, fp) => {
     footprint_types[name] = fp
 }
 
-const footprint = exports._footprint = (config, name, points, point, net_indexer, component_indexer, units, extra) => {
-
-    if (config === false) return ''
+const footprint = exports._footprint = (points, net_indexer, component_indexer, units, extra) => (config, name, point) => {
 
     // config sanitization
-    a.unexpected(config, name, ['type', 'anchor', 'nets', 'anchors', 'params'])
-    const type = a.in(config.type, `${name}.type`, Object.keys(footprint_types))
-    let anchor = anchor_lib.parse(config.anchor || {}, `${name}.anchor`, points, true, point)(units)
-    const nets = a.sane(config.nets || {}, `${name}.nets`, 'object')()
-    const anchors = a.sane(config.anchors || {}, `${name}.anchors`, 'object')()
-    const params = a.sane(config.params || {}, `${name}.params`, 'object')()
+    a.unexpected(config, name, ['what', 'params'])
+    const what = a.in(config.what, `${name}.what`, Object.keys(footprint_types))
+    const fp = footprint_types[what]
+    const original_params = config.params || {}
 
-    // basic setup
-    const fp = footprint_types[type]
+    // param sanitization
+    // we unset the mirror config, as it would be an unexpected field
+    let params = u.deepcopy(original_params)
+    delete params.mirror
+    // but still override with it when applicable
+    if (point.meta.mirrored && original_params.mirror !== undefined) {
+        const mirror_overrides = a.sane(original_params.mirror, `${name}.params.mirror`, 'object')()
+        params = prep.extend(params, mirror_overrides)
+    }
+    a.unexpected(params, `${name}.params`, Object.keys(fp.params))
+
+    // parsing parameters
     const parsed_params = {}
+    for (const [param_name, param_def] of Object.entries(fp.params)) {
 
-    // connecting other, non-net, non-anchor parameters
-    parsed_params.param = {}
-    for (const [param_name, param_value] of Object.entries(prep.extend(fp.params || {}, params))) {
-        let value = param_value
-        if (a.type(value)() == 'string' && value.startsWith('=') && point) {
-            const indirect = value.substring(1)
-            value = point.meta[indirect]
-            if (value === undefined) {
-                throw new Error(`Indirection "${name}.params.${param}" --> "${point.meta.name}.${indirect}" to undefined value!`)
+        // expand param definition shorthand
+        let parsed_def = param_def
+        let def_type = a.type(param_def)(units)
+        if (def_type == 'string') {
+            parsed_def = {type: 'string', value: param_def}
+        } else if (def_type == 'number') {
+            parsed_def = {type: 'number', value: a.mathnum(param_def)(units)}
+        } else if (def_type == 'boolean') {
+            parsed_def = {type: 'boolean', value: param_def}
+        } else if (def_type == 'array') {
+            parsed_def = {type: 'array', value: param_def}
+        } else if (def_type == 'object') {
+            // parsed param definitions also expand to an object
+            // so to detect whether this is an arbitrary object,
+            // we first have to make sure it's not an expanded param def
+            // (this has to be a heuristic, but should be pretty reliable)
+            const defarr = Object.keys(param_def)
+            const already_expanded = defarr.length == 2 && defarr.includes('type') && defarr.includes('value')
+            if (!already_expanded) {
+                parsed_def = {type: 'object', value: param_def}
             }
+        } else {
+            parsed_def = {type: 'net', value: undefined}
         }
-        parsed_params.param[param_name] = value
+
+        // combine default value with potential user override
+        let value = params[param_name] !== undefined ? params[param_name] : parsed_def.value
+        const type = parsed_def.type
+
+        // templating support, with conversion back to raw datatypes
+        const converters = {
+            string: v => v,
+            number: v => a.sane(v, `${name}.params.${param_name}`, 'number')(units),
+            boolean: v => v === 'true',
+            array: v => yaml.load(v),
+            object: v => yaml.load(v),
+            net: v => v,
+            anchor: v => yaml.load(v)
+        }
+        a.in(type, `${name}.params.${param_name}.type`, Object.keys(converters))
+        if (a.type(value)() == 'string') {
+            value = u.template(value, point.meta)
+            value = converters[type](value)
+        }
+
+        // type-specific postprocessing
+        if (['string', 'number', 'boolean', 'array', 'object'].includes(type)) {
+            parsed_params[param_name] = value
+        } else if (type == 'net') {
+            const net = a.sane(value, `${name}.params.${param_name}`, 'string')(units)
+            const index = net_indexer(net)
+            parsed_params[param_name] = {
+                name: net,
+                index: index,
+                str: `(net ${index} "${net}")`
+            }
+        } else { // anchor
+            let parsed_anchor = anchor(value, `${name}.params.${param_name}`, points, point)(units)
+            parsed_anchor.y = -parsed_anchor.y // kicad mirror, as per usual
+            parsed_params[param_name] = parsed_anchor
+        }
     }
 
     // reference
-    const component_ref = parsed_params.ref = component_indexer(parsed_params.param.class || '_')
+    const component_ref = parsed_params.ref = component_indexer(parsed_params.designator || '_')
     parsed_params.ref_hide = extra.references ? '' : 'hide'
 
     // footprint positioning
-    parsed_params.at = `(at ${anchor.x} ${-anchor.y} ${anchor.r})`
-    parsed_params.rot = anchor.r
-    parsed_params.xy = (x, y) => {
-        const new_anchor = anchor_lib.parse({
-            shift: [x, -y]
-        }, '_internal_footprint_xy', points, true, anchor)(units)
+    parsed_params.at = `(at ${point.x} ${-point.y} ${point.r})`
+    parsed_params.rot = point.r
+    parsed_params.ixy = (x, y) => {
+        const sign = point.meta.mirrored ? -1 : 1
+        return `${sign * x} ${y}`
+    }
+    const xyfunc = (x, y, resist) => {
+        const new_anchor = anchor({
+            shift: [x, -y],
+            resist: resist
+        }, '_internal_footprint_xy', points, point)(units)
         return `${new_anchor.x} ${-new_anchor.y}`
     }
-
-    // connecting nets
-    parsed_params.net = {}
-    for (const [net_name, net_value] of Object.entries(prep.extend(fp.nets || {}, nets))) {
-        let net = a.sane(net_value, `${name}.nets.${net_name}`, 'string')()
-        if (net.startsWith('=') && point) {
-            const indirect = net.substring(1)
-            net = point.meta[indirect]
-            net = a.sane(net, `${name}.nets.${net_name} --> ${point.meta.name}.${indirect}`, 'string')()
-        }
-        const index = net_indexer(net)
-        parsed_params.net[net_name] = {
-            name: net,
-            index: index,
-            str: `(net ${index} "${net}")`
-        }
-    }
+    parsed_params.xy = (x, y) => xyfunc(x, y, true)
+    parsed_params.sxy = (x, y) => xyfunc(x, y, false)
 
     // allowing footprints to add dynamic nets
     parsed_params.local_net = suffix => {
@@ -231,14 +281,6 @@ const footprint = exports._footprint = (config, name, points, point, net_indexer
             index: index,
             str: `(net ${index} "${net}")`
         }
-    }
-
-    // parsing anchor-type parameters
-    parsed_params.anchors = {}
-    for (const [anchor_name, anchor_config] of Object.entries(prep.extend(fp.anchors || {}, anchors))) {
-        let parsed_anchor = anchor_lib.parse(anchor_config || {}, `${name}.anchors.${anchor_name}`, points, true, anchor)(units)
-        parsed_anchor.y = -parsed_anchor.y
-        parsed_params.anchors[anchor_name] = parsed_anchor
     }
 
     return fp.body(parsed_params)
@@ -285,21 +327,27 @@ exports.parse = (config, points, outlines, units) => {
         }
 
         const footprints = []
+        const footprint_factory = footprint(points, net_indexer, component_indexer, units, {references})
 
-        // key-level footprints
-        for (const [p_name, point] of Object.entries(points)) {
-            for (const [f_name, f] of Object.entries(point.meta.footprints || {})) {
-                footprints.push(footprint(f, `${p_name}.footprints.${f_name}`, points, point, net_indexer, component_indexer, units, {references}))
-            }
-        }
-
-        // global one-off footprints
+        // generate footprints
         if (a.type(pcb_config.footprints)() == 'array') {
             pcb_config.footprints = {...pcb_config.footprints}
         }
-        const global_footprints = a.sane(pcb_config.footprints || {}, `pcbs.${pcb_name}.footprints`, 'object')()
-        for (const [gf_name, gf] of Object.entries(global_footprints)) {
-            footprints.push(footprint(gf, `pcbs.${pcb_name}.footprints.${gf_name}`, points, undefined, net_indexer, component_indexer, units, {references}))
+        const footprints_config = a.sane(pcb_config.footprints || {}, `pcbs.${pcb_name}.footprints`, 'object')()
+        for (const [f_name, f] of Object.entries(footprints_config)) {
+            const name = `pcbs.${pcb_name}.footprints.${f_name}`
+            a.sane(f, name, 'object')()
+            const asym = a.asym(f.asym || 'source', `${name}.asym`)
+            const where = filter(f.where, `${name}.where`, points, units, asym)
+            const original_adjust = f.adjust // need to save, so the delete's don't get rid of it below
+            const adjust = start => anchor(original_adjust || {}, `${name}.adjust`, points, start)(units)
+            delete f.asym
+            delete f.where
+            delete f.adjust
+            for (const w of where) {
+                const aw = adjust(w.clone())
+                footprints.push(footprint_factory(f, name, aw))
+            }
         }
 
         // finalizing nets

@@ -1,10 +1,35 @@
 const yaml = require('js-yaml')
+const jszip = require('jszip')
 const makerjs = require('makerjs')
-const jscad = require('@jscad/openjscad')
 
 const u = require('./utils')
 const a = require('./assert')
 const kle = require('./kle')
+
+exports.unpack = async (zip) => {
+
+    // main config text (has to be called "config.ext" where ext is one of yaml/json/js)
+    const candidates = zip.file(/^config\.(yaml|json|js)$/)
+    if (candidates.length != 1) {
+        throw new Error('Ambiguous config in bundle!')
+    }
+    const config_text = await candidates[0].async('string')
+    const injections = []
+
+    // bundled footprints
+    const fps = zip.folder('footprints')
+    const module_prefix = 'const module = {};\n\n'
+    const module_suffix = '\n\nreturn module.exports;'
+    for (const fp of fps.file(/.*\.js$/)) {
+        const name = fp.name.slice('footprints/'.length).split('.')[0]
+        const text = await fp.async('string')
+        const parsed = new Function(module_prefix + text + module_suffix)()
+        // TODO: some sort of footprint validation?
+        injections.push(['footprint', name, parsed])
+    }
+
+    return [config_text, injections]
+}
 
 exports.interpret = (raw, logger) => {
     let config = raw
@@ -62,21 +87,6 @@ exports.twodee = (model, debug) => {
     if (debug) {
         result.yaml = assembly
         result.svg = makerjs.exporter.toSVG(assembly)
-    }
-    return result
-}
-
-exports.threedee = async (script, debug) => {
-    const compiled = await new Promise((resolve, reject) => {
-        jscad.compile(script, {}).then(compiled => {
-            resolve(compiled)
-        })
-    })
-    const result = {
-        stl: jscad.generateOutput('stla', compiled).asBuffer().toString()
-    }
-    if (debug) {
-        result.jscad = script
     }
     return result
 }

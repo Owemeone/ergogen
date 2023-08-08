@@ -24,7 +24,8 @@ module.exports = class Point {
         [this.x, this.y] = val
     }
 
-    shift(s, relative=true) {
+    shift(s, relative=true, resist=false) {
+        s[0] *= (!resist && this.meta.mirrored) ? -1 : 1
         if (relative) {
             s = m.point.rotate(s, this.r)
         }
@@ -33,8 +34,11 @@ module.exports = class Point {
         return this
     }
 
-    rotate(angle, origin=[0, 0]) {
-        this.p = m.point.rotate(this.p, angle, origin)
+    rotate(angle, origin=[0, 0], resist=false) {
+        angle *= (!resist && this.meta.mirrored) ? -1 : 1
+        if (origin) {
+            this.p = m.point.rotate(this.p, angle, origin)
+        }
         this.r += angle
         return this
     }
@@ -58,8 +62,25 @@ module.exports = class Point {
         return m.model.moveRelative(m.model.rotate(model, this.r), this.p)
     }
 
+    unposition(model) {
+        return m.model.rotate(m.model.moveRelative(model, [-this.x, -this.y]), -this.r)
+    }
+
     rect(size=14) {
-        let rect = u.rect(size, size, [-size/2, -size/2], this.meta.mirrored)
+        let rect = u.rect(size, size, [-size/2, -size/2])
         return this.position(rect)
+    }
+
+    angle(other) {
+        const dx = other.x - this.x
+        const dy = other.y - this.y
+        return -Math.atan2(dx, dy) * (180 / Math.PI)
+    }
+
+    equals(other) {
+        return this.x === other.x
+            && this.y === other.y
+            && this.r === other.r
+            && JSON.stringify(this.meta) === JSON.stringify(other.meta)
     }
 }

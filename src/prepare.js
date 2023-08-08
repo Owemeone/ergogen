@@ -42,11 +42,14 @@ const traverse = exports.traverse = (config, root, breadcrumbs, op) => {
         }
         return result
     } else if (a.type(config)() == 'array') {
+        // needed so that arrays can set output the same way as objects within ops
+        const dummy = {}
         const result = []
         let index = 0
         for (const val of config) {
             breadcrumbs.push(`[${index}]`)
-            result[index] = traverse(val, root, breadcrumbs, op)
+            op(dummy, 'dummykey', traverse(val, root, breadcrumbs, op), root, breadcrumbs)
+            result[index] = dummy.dummykey
             breadcrumbs.pop()
             index++
         }
@@ -73,7 +76,7 @@ exports.inherit = config => traverse(config, config, [], (target, key, val, root
             candidates = candidates.concat(parents)
             list.unshift(other)
         }
-        val = extend.apply(this, list)
+        val = extend.apply(null, list)
         delete val.$extends
     }
     target[key] = val
