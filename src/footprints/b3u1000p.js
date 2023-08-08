@@ -1,11 +1,9 @@
 module.exports = {
-  nets: {
-    r1: "r1",
-    r2: "r2",
-  },
   params: {
     class: "S",
     reverse: true,
+	r1: {type: 'net', value: "r1"},
+    r2: {type: 'net', value: "r2"}
   },
   body: (p) => {
     const standard = `
@@ -38,14 +36,14 @@ module.exports = {
       return `
 		    ${"" /* pins */}
 (pad 1 smd rect (at ${def_neg}1.7 0) (size 0.9 1.7) (layers ${def_side}.Cu ${def_side}.Paste ${def_side}.Mask) ${
-        p.net.r1.str
+        p.r1.str
       })
 (pad 2 smd rect (at ${def_pos}1.7 0) (size 0.9 1.7) (layers ${def_side}.Cu ${def_side}.Paste ${def_side}.Mask) ${
-        p.net.r2.str
+        p.r2.str
       })
 `;
     }
-    if (p.param.reverse) {
+    if (p.reverse) {
       return `
 		${standard}
 		${pins("-", "", "B")}
