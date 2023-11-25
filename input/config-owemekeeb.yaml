@@ -285,6 +285,6 @@ pcbs:
             - main_ring_home
           shift: [0, -0.25ky]
         params:
-          text: "JLCJLCJLCJLC"
+          text: JLCJLCJLCJLC
           layer: F.SilkS
-          justify: ''
+          align: left
