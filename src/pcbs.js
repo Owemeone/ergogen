@@ -117,6 +117,18 @@ const kicad_default_netclass = `
   )
 `
 
+const kicad_power_netclass = `
+  (net_class Power "This is the power net class."
+    (clearance 0.2)
+    (trace_width 0.5)
+    (via_dia 0.8)
+    (via_drill 0.4)
+    (uvia_dia 0.3)
+    (uvia_drill 0.1)
+    __ADD_NET
+  )
+`
+
 const makerjs2kicad = exports._makerjs2kicad = (model, layer) => {
     const grs = []
     const xy = val => `${val[0]} ${-val[1]}`
