@@ -304,3 +304,7 @@ pcbs:
         what: mountinghole
         where:
           ref: [main_pinkie_bottom]
+cases:
+  bottom:
+    - name: board
+      extrude: 1
