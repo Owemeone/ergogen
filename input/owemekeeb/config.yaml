@@ -306,5 +306,5 @@ pcbs:
           ref: [main_pinkie_bottom]
 cases:
   bottom:
-    - name: board
+    - name: pcb
       extrude: 1
