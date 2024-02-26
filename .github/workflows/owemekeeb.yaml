@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Generate unrouted PCBs
-        run: node src/cli.js .
+        run: node ../../src/cli.js .
         working-directory: input/owemekeeb
       - name: List files
         run: ls -al output/pcbs
