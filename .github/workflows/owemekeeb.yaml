@@ -30,7 +30,7 @@ jobs:
           # Required - kibot config file
           config: config.kibot.yaml
           # optional - prefix to output defined in config
-          dir: output
+          dir: input/owemekeeb/output
           # optional - schematic file
           # schema: 'schematic.sch'
           # optional - PCB design file
@@ -38,5 +38,5 @@ jobs:
       - name: upload results
         uses: actions/upload-artifact@v2
         with:
-          name: output
-          path: output
+          name: Owemekeeb
+          path: input/owemekeeb/output
