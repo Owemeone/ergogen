@@ -23,18 +23,32 @@ jobs:
       - name: Generate unrouted PCBs
         run: node ../../src/cli.js .
         working-directory: input/owemekeeb
-      - name: List files
-        run: ls -al input/owemekeeb/output/pcbs
+      - name: Export DSN for main PCB
+        uses: ./.github/actions/export-dsn
+        with:
+          pcb_file: input/${{ matrix.keyboard }}/output/pcbs/${{ matrix.keyboard }}.kicad_pcb
+          dsn_file: input/${{ matrix.keyboard }}/output/pcbs/${{ matrix.keyboard }}.dsn
+      - name: Autoroute main PCB
+        uses: ./.github/actions/autoroute
+        with:
+          dsn_file: input/${{ matrix.keyboard }}/output/pcbs/${{ matrix.keyboard }}.dsn
+          ses_file: input/${{ matrix.keyboard }}/output/pcbs/${{ matrix.keyboard }}.ses
+      - name: Import SES into main PCB
+        uses: ./.github/actions/import-ses
+        with:
+          pcb_input_file: input/${{ matrix.keyboard }}/output/pcbs/${{ matrix.keyboard }}.kicad_pcb
+          pcb_output_file: input/${{ matrix.keyboard }}/output/pcbs/${{ matrix.keyboard }}_routed.kicad_pcb
+          ses_file: input/${{ matrix.keyboard }}/output/pcbs/${{ matrix.keyboard }}.ses
       - uses: INTI-CMNB/KiBot@v2_k7
         with:
           # Required - kibot config file
           config: config.kibot.yaml
           # optional - prefix to output defined in config
-          dir: input/owemekeeb/output
+          dir: input/${{ matrix.keyboard }}/output
           # optional - schematic file
           # schema: 'schematic.sch'
           # optional - PCB design file
-          board: 'input/owemekeeb/output/pcbs/owemekeeb.kicad_pcb'
+          board: 'input/${{ matrix.keyboard }}/output/pcbs/${{ matrix.keyboard }}.kicad_pcb'
       - name: upload results
         uses: actions/upload-artifact@v2
         with:
