@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - input/config-owemekeeb.yaml
+      - input/owemekeeb/config.yaml
 jobs:
   #build:
   #  uses: ./.github/workflows/main.yml
@@ -21,7 +21,8 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Generate unrouted PCBs
-        run: node src/cli.js input/config-owemekeeb.yaml
+        run: node src/cli.js .
+        working-directory: input/owemekeeb
       - name: List files
         run: ls -al output/pcbs
       - uses: INTI-CMNB/KiBot@v2_k7
@@ -33,7 +34,7 @@ jobs:
           # optional - schematic file
           # schema: 'schematic.sch'
           # optional - PCB design file
-          board: 'output/pcbs/owemekeeb.kicad_pcb'
+          board: 'input/owemekeeb/output/pcbs/owemekeeb.kicad_pcb'
       - name: upload results
         uses: actions/upload-artifact@v2
         with:
