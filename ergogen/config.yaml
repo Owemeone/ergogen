@@ -230,6 +230,7 @@ outlines:
       operation: stack
 pcbs:
   owemekeeb:
+    template: kicad8
     outlines:
       board:
         outline: pcb
