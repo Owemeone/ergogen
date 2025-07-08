@@ -304,6 +304,6 @@ pcbs:
         where:
           ref: [main_pinkie_bottom]
 cases:
-  bottom:
+  owemekeeb_bottom_tray:
     - name: pcb
       extrude: 1
