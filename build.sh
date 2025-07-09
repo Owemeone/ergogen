@@ -6,11 +6,14 @@ container_args="-w /board -v $(pwd):/board --rm"
 
 # Define the boards to autoroute and export, and the plates
 boards="corney_island_wireless corney_island"
+# boards="owemekeeb"
 plates="backplate frontplate controller_overlay"
+# plates="backplate frontplate"
 
 # Define the KiCad Auto Docker image to use
 kicad_auto_image="ghcr.io/inti-cmnb/kicad8_auto:latest"
-freerouting_cli_image="ceoloide/ergogen-freerouting:latest"
+# freerouting_cli_image="ceoloide/ergogen-freerouting:latest"
+freerouting_cli_image="ghcr.io/freerouting/freerouting:latest"
 
 # Preserve manually routed files
 if [ -e pcbs/*_manually_routed.kicad_pcb ]; then
@@ -46,6 +49,10 @@ if [ ! -e freerouting/freerouting-2.0.1.jar ]; then
     curl https://github.com/freerouting/freerouting/releases/download/v2.0.1/freerouting-2.0.1.jar -L -o freerouting/freerouting-2.0.1.jar
 fi
 
+if [ ! -e freerouting/freerouting-2.1.0.jar ]; then
+    curl https://github.com/freerouting/freerouting/releases/download/v2.0.1/freerouting-2.1.0.jar -L -o freerouting/freerouting-2.1.0.jar
+fi
+
 if [ ! -e freerouting/freerouting-SNAPSHOT.jar ]; then
     curl https://github.com/freerouting/freerouting/releases/download/SNAPSHOT/freerouting-SNAPSHOT-20241111_140100.jar -L -o freerouting/freerouting-SNAPSHOT.jar
 fi
@@ -70,8 +77,10 @@ do
     if [ -e pcbs/${board}.dsn ]; then
         echo Autoroute PCB
         # ${container_cmd} run ${container_args} ${freerouting_cli_image} java -Dlog4j.configurationFile=file:./freerouting/log4j2.xml -jar /opt/freerouting_cli.jar -de pcbs/${board}.dsn -do pcbs/${board}.ses -dr freerouting/freerouting.rules -mp 20
-        ${container_cmd} run ${container_args} ${freerouting_cli_image} java -Dlog4j.configurationFile=file:./freerouting/log4j2.xml -jar /opt/freerouting.jar -de pcbs/${board}.dsn -do pcbs/${board}.ses -dr ./freerouting/freerouting.rules --user-data-path ./freerouting -mp 20 -mt 1 -dct 0 --gui.enabled=false --profile.email=marco.massarelli@gmail.com
-        # java -Dlog4j.configurationFile=file:./freerouting/log4j2.xml -jar freerouting/freerouting-2.0.1.jar -de pcbs/${board}.dsn -do pcbs/${board}.ses --user-data-path ./freerouting -mp 20 -mt 1 -dct 0 --gui.enabled=false --profile.email=marco.massarelli@gmail.com
+        # ${container_cmd} run ${container_args} ${freerouting_cli_image} java -Dlog4j.configurationFile=file:./freerouting/log4j2.xml -jar /opt/freerouting.jar -de pcbs/${board}.dsn -do pcbs/${board}.ses -dr ./freerouting/freerouting.rules --user-data-path ./freerouting -mp 20 -mt 1 -dct 0 --gui.enabled=false --profile.email=marco.massarelli@gmail.com
+        # ${container_cmd} run ${container_args} ${freerouting_cli_image} java -Dlog4j.configurationFile=file:./freerouting/log4j2.xml -jar /opt/freerouting.jar -de pcbs/${board}.dsn -do pcbs/${board}.ses -dr ./freerouting/freerouting.rules --user-data-path ./freerouting -mp 20 -mt 1 -dct 0 --gui.enabled=false --profile.email=dave@liefbroer.com
+        ${container_cmd} run ${container_args} ${freerouting_cli_image} java -Dlog4j.configurationFile=file:./freerouting/log4j2.xml -jar /app/freerouting-executable.jar -de pcbs/${board}.dsn -do pcbs/${board}.ses -dr ./freerouting/freerouting.rules --user-data-path ./freerouting -mp 20 -mt 1 -dct 0 --gui.enabled=false --profile.email=dave@liefbroer.com
+        # java -Dlog4j.configurationFile=file:./freerouting/log4j2.xml -jar freerouting/freerouting-2.1.0.jar -de pcbs/${board}.dsn -do pcbs/${board}.ses --user-data-path ./freerouting -mp 20 -mt 1 -dct 0 --gui.enabled=false --profile.email=dave@liefbroer.com
         # java -Dlog4j.configurationFile=file:./freerouting/log4j2.xml -jar freerouting/freerouting-SNAPSHOT.jar -de pcbs/${board}.dsn -do pcbs/${board}.ses --user-data-path ./freerouting -mp 20 -mt 1 -dct 0 --gui.enabled=false --profile.email=marco.massarelli@gmail.com
     fi
     if [ -e pcbs/${board}.ses ]; then
@@ -87,5 +96,5 @@ do
 done
 
 # Docker runs as root and causes issues with file ownership
-sudo chown $USER -R ergogen
-sudo chown $USER -R freerouting
+# sudo chown $USER -R ergogen
+# sudo chown $USER -R freerouting
